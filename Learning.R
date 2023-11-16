@@ -2,6 +2,7 @@ library(bayesrules)
 library(bayesplot)
 library(tidyverse)
 library(rstanarm)
+library(tidybayes)
 
 data("weather_WU")
 
@@ -57,7 +58,28 @@ weather_model_2_df %>%
   mcmc_areas(pars = c('uluru', 'wollongong'))
 
 
+# Using mutliple predictors
 
+weather_model_3_prior <- stan_glm(
+  temp3pm ~ temp9am + location,
+  data = weather_WU, family = gaussian, 
+  prior_intercept = normal(25, 5),
+  prior = normal(0, 2.5, autoscale = TRUE), 
+  prior_aux = exponential(1, autoscale = TRUE),
+  chains = 4, iter = 5000*2, seed = 84735,
+  prior_PD = TRUE)
+
+weather_WU %>% 
+  add_predicted_draws(weather_model_3_prior, n=100) %>% 
+  ggplot(aes(x = .prediction, group = .draw)) +
+    geom_density() +
+    xlab("temp3pm")
+
+
+weather_WU %>% 
+  add_fitted_draws(weather_model_3_prior, n = 100) %>% 
+  ggplot(aes(x = temp9am, y = temp3pm, color = location)) +
+    geom_line(aes(y = .value, group = paste(location, .draw)))
 
 
 

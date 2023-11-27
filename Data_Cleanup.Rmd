@@ -1,0 +1,13 @@
+---
+title: "Data Cleanup"
+output: html_notebook
+---
+
+Data Cleanup is being done in this notebook so it's easier to see results immediately. The Markdown portion of this isn't very important only the Notebook.
+
+```{r}
+Omitted_School = na.omit(School_Data)
+```
+
+
+# With all NAs omitted there are only

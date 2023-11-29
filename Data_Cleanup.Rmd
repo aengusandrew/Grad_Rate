@@ -7,7 +7,31 @@ Data Cleanup is being done in this notebook so it's easier to see results immedi
 
 ```{r}
 Omitted_School = na.omit(School_Data)
+Omitted_School
+```
+
+With all NAs omitted there are only 2 schools that report all their data, so some rows will need to be removed.
+
+
+```{r}
+
+
 ```
 
 
-# With all NAs omitted there are only
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

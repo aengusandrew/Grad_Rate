@@ -116,7 +116,7 @@ school_analysis_500 = school_analysis %>%
 
 school_analysis_500 %>% 
   ggplot(aes(x = enroll_count, y = (grad_pct))) +
-  geom_point(aes(color = )) +
+  geom_point(aes(color = nrc_code)) +
   geom_smooth(method= "lm")
 ```
 

@@ -11,6 +11,9 @@ library(tidyverse)
 
 Initial cleanup removing unnecessary columns and rows
 ```{r}
+library(readr)
+School_full <- read_csv("Data/School_full.csv")
+
 school_clean = School_full %>% 
   filter(membership_key == 188) %>% 
   select(lea_beds, nrc_code, subgroup_code, subgroup_name, enroll_cnt, grad_pct)
@@ -55,7 +58,7 @@ for (i in 1:length(school_clean$lea_beds)) {
   }
   
   group_code = school_clean$subgroup_code[i]
-  switch(group_code,
+  switch(as.character(group_code),
          '1' = { # all students
            school_analysis$enroll_count[n] = school_clean$enroll_cnt[i]
            school_analysis$grad_pct[n] = school_clean$grad_pct[i]
@@ -63,65 +66,52 @@ for (i in 1:length(school_clean$lea_beds)) {
            curr_schl_enrl = school_analysis$enroll_count[n]
          },
          '3' = { # male group
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > pred_male) school_analysis$pred_male[n] = TRUE
-           else school_analysis$pred_male[n] = FALSE
+           school_analysis$pred_male[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > pred_male
          },
          '11' = { # students with disabilities
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_disabled) school_analysis$exc_disabled[n] = TRUE
-           else school_analysis$exc_disabled[n] = FALSE
+           school_analysis$exc_disabled[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > exc_disabled
          },
          '8' = { # white students
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > pred_white) school_analysis$pred_white[n] = TRUE
-           else school_analysis$pred_white[n] = FALSE
+           school_analysis$pred_white[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > pred_white
          },
          '15' = { # economically disadvantaged
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_ecd) school_analysis$exc_ecd[n] = TRUE
-           else school_analysis$exc_ecd[n] = FALSE
+           school_analysis$exc_ecd[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > exc_ecd
          },
          '13' = { # English language learner
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_esl) school_analysis$exc_esl[n] = TRUE
-           else school_analysis$exc_esl[n] = FALSE
+           school_analysis$exc_esl[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > exc_esl
          },
          '22' = { # in foster care
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_foster) school_analysis$exc_foster[n] = TRUE
-           else school_analysis$exc_foster[n] = FALSE
+           school_analysis$exc_foster[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > exc_foster
          },
          '20' = { # homeless
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_homeless) school_analysis$exc_homeless[n] = TRUE
-           else school_analysis$exc_homeless[n] = FALSE
+           school_analysis$exc_homeless[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > exc_homeless
          },
          '17' = { # migrant
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_migrant) school_analysis$exc_migrant[n] = TRUE
-           else school_analysis$exc_migrant[n] = FALSE
+           school_analysis$exc_migrant[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > exc_migrant
          },
          '24' = { # parent in armed forces
-           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_armed) school_analysis$exc_armed[n] = TRUE
-           else school_analysis$exc_armed[n] = FALSE
+           school_analysis$exc_armed[n] = school_clean$enroll_cnt[i]/curr_schl_enrl > exc_armed
          }
          )
 }
 ```
+This organizes all the data as we want, but leaves any category that a school had 0 students of unreported. We'll need to remove the schools that have `NA` for their grad percentage and then put in `FALSE` for the demographics that have an `NA`.
+
 
 ```{r}
-school_analysis %>% 
-  filter(grad_pct != "-")
+school_analysis[1,2]
+
+for (i in 1:712) {
+  for (j in 5:13) {
+    if(is.na(school_analysis[i,j])) school_analysis[i,j] = FALSE 
+  }
+}
 
 school_analysis$grad_pct = as.numeric(substr(school_analysis$grad_pct, 1, 2))/100
+
+school_analysis = school_analysis %>% 
+  filter(!(is.na(grad_pct)))
 ```
-
-
-```{r}
-school_analysis_500 = school_analysis %>% 
-  filter(enroll_count < 500, grad_pct > 0.5) 
-
-school_analysis_500 %>% 
-  ggplot(aes(x = enroll_count, y = (grad_pct))) +
-  geom_point(aes(color = nrc_code)) +
-  geom_smooth(method= "lm")
-```
-
-
-
 
 
 

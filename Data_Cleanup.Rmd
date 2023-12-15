@@ -1,31 +1,64 @@
 ---
 title: "Data Cleanup"
-output: html_notebook
 ---
 
 Data Cleanup is being done in this notebook so it's easier to see results immediately. The Markdown portion of this isn't very important only the Notebook.
 
 ```{r}
-Omitted_School = na.omit(School_Data)
-Omitted_School
+library(tidyverse)
 ```
 
-With all NAs omitted there are only 2 schools that report all their data, so some rows will need to be removed.
+
+Initial cleanup removing unnecessary columns and rows
+```{r}
+school_clean = School_full %>% 
+  filter(membership_key == 188) %>% 
+  select(lea_beds, nrc_code, subgroup_code, subgroup_name, enroll_cnt, grad_pct)
+```
+
+`school_clean` should now contain all the data from every school in NYS, with only the graduation data after students have had a full 6 years and 2 months to graduate, the longest a student can take to graduate and still be reported here.
+
+```{r}
+pred_male = 0.5
+pred_white = 0.5
+exc_ecd = 0.5
+exc_esl = 0.5
+exc_foster = 0.5
+exc_homeless = 0.5
+exc_migrant = 0.5
+```
+These `pred` values represent how much of a school must have a particular trait for it to be considered to *predominantly* have that trait, in this case if a school is *predominantly* male is has more than 50% male students. The `exc` categories represent schools that have an *excess* of that particular trait, meaning that it falls above state or national averages (depending on which data was more readily available).
 
 
 ```{r}
+school_analysis = data.frame(matrix(nrow = 0, ncol = 11))
 
-
+colnames(school_analysis) = c("beds_code", "enroll_count", "grad_pct", "nrc_code", "pred_male", "pred_white", "pred_ecd", "pred_esl", "pred_foster", "pred_homeless", "pred_migrant")
 ```
+This just creates the empty data frame that the school data will be transferred into.
 
 
+```{r}
+length(unique(school_clean$lea_beds))
+```
+There are 712 unique `beds` codes in this dataset, meaning 712 schools.
 
+```{r}
+n = 0 # this is a counter for which school we are on, it is names n just so it is easier to index
+current_beds = 0
 
-
-
-
-
-
+for (i in 1:length(school_clean$lea_beds)) {
+  if(current_beds != school_clean$lea_beds[i]) {
+    school_counter = school_counter + 1
+    current_beds = school_clean$lea_beds[i]
+    school_analysis$beds_code[n] = current_beds
+  }
+  
+  group_code = school_clean$subgroup_code[i]
+  switch(group_code,
+         )
+}
+```
 
 
 

@@ -21,26 +21,26 @@ school_clean = School_full %>%
 ```{r}
 pred_male = 0.5
 pred_white = 0.5
+exc_disabled = 0.5
 exc_ecd = 0.5
 exc_esl = 0.5
 exc_foster = 0.5
 exc_homeless = 0.5
 exc_migrant = 0.5
+exc_armed = 0.5
 ```
 These `pred` values represent how much of a school must have a particular trait for it to be considered to *predominantly* have that trait, in this case if a school is *predominantly* male is has more than 50% male students. The `exc` categories represent schools that have an *excess* of that particular trait, meaning that it falls above state or national averages (depending on which data was more readily available).
 
 
 ```{r}
-school_analysis = data.frame(matrix(nrow = 0, ncol = 11))
+num_schools = length(unique(school_clean$lea_beds))
+num_schools
 
-colnames(school_analysis) = c("beds_code", "enroll_count", "grad_pct", "nrc_code", "pred_male", "pred_white", "pred_ecd", "pred_esl", "pred_foster", "pred_homeless", "pred_migrant")
+school_analysis = data.frame(matrix(nrow = num_schools, ncol = 13))
+
+colnames(school_analysis) = c("beds_code", "enroll_count", "grad_pct", "nrc_code", "pred_male", "exc_disabled", "pred_white", "exc_ecd", "exc_esl", "exc_foster", "exc_homeless", "exc_migrant", "exc_armed")
 ```
 This just creates the empty data frame that the school data will be transferred into.
-
-
-```{r}
-length(unique(school_clean$lea_beds))
-```
 There are 712 unique `beds` codes in this dataset, meaning 712 schools.
 
 ```{r}
@@ -49,19 +49,76 @@ current_beds = 0
 
 for (i in 1:length(school_clean$lea_beds)) {
   if(current_beds != school_clean$lea_beds[i]) {
-    school_counter = school_counter + 1
+    n = n + 1
     current_beds = school_clean$lea_beds[i]
     school_analysis$beds_code[n] = current_beds
   }
   
   group_code = school_clean$subgroup_code[i]
   switch(group_code,
+         '1' = { # all students
+           school_analysis$enroll_count[n] = school_clean$enroll_cnt[i]
+           school_analysis$grad_pct[n] = school_clean$grad_pct[i]
+           school_analysis$nrc_code[n] = school_clean$nrc_code[i]
+           curr_schl_enrl = school_analysis$enroll_count[n]
+         },
+         '3' = { # male group
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > pred_male) school_analysis$pred_male[n] = TRUE
+           else school_analysis$pred_male[n] = FALSE
+         },
+         '11' = { # students with disabilities
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_disabled) school_analysis$exc_disabled[n] = TRUE
+           else school_analysis$exc_disabled[n] = FALSE
+         },
+         '8' = { # white students
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > pred_white) school_analysis$pred_white[n] = TRUE
+           else school_analysis$pred_white[n] = FALSE
+         },
+         '15' = { # economically disadvantaged
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_ecd) school_analysis$exc_ecd[n] = TRUE
+           else school_analysis$exc_ecd[n] = FALSE
+         },
+         '13' = { # English language learner
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_esl) school_analysis$exc_esl[n] = TRUE
+           else school_analysis$exc_esl[n] = FALSE
+         },
+         '22' = { # in foster care
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_foster) school_analysis$exc_foster[n] = TRUE
+           else school_analysis$exc_foster[n] = FALSE
+         },
+         '20' = { # homeless
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_homeless) school_analysis$exc_homeless[n] = TRUE
+           else school_analysis$exc_homeless[n] = FALSE
+         },
+         '17' = { # migrant
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_migrant) school_analysis$exc_migrant[n] = TRUE
+           else school_analysis$exc_migrant[n] = FALSE
+         },
+         '24' = { # parent in armed forces
+           if(school_clean$enroll_cnt[i]/curr_schl_enrl > exc_armed) school_analysis$exc_armed[n] = TRUE
+           else school_analysis$exc_armed[n] = FALSE
+         }
          )
 }
 ```
 
+```{r}
+school_analysis %>% 
+  filter(grad_pct != "-")
+
+school_analysis$grad_pct = as.numeric(substr(school_analysis$grad_pct, 1, 2))/100
+```
 
 
+```{r}
+school_analysis_500 = school_analysis %>% 
+  filter(enroll_count < 500, grad_pct > 0.5) 
+
+school_analysis_500 %>% 
+  ggplot(aes(x = enroll_count, y = (grad_pct))) +
+  geom_point(aes(color = )) +
+  geom_smooth(method= "lm")
+```
 
 
 
